@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
 
 
 int main()
@@ -35,23 +37,43 @@ int main()
 
 		pid = fork();
 		if(pid == 0){
-			execvp(l->seq[0][0], l->seq[0]);
+			if (l->in) {
+				int fdIn = open(l->in, O_RDONLY, 0);
+				dup2(fdIn, STDIN_FILENO);
+				close(fdIn);
+			}
+			
+			if (l->out){
+				int fdOut = open(l->out, O_WRONLY, 0);
+				
+				if(fdOut == -1){
+					fprintf(stderr, "%s: Permission denied\n", l->out);
+				}else{
+					dup2(fdOut, STDOUT_FILENO);
+				}
+
+				close(fdOut);
+			}
+
+			int execError;
+			char* command = l->seq[0][0];
+			execError = execvp(command, l->seq[0]);
+			if(execError == -1){
+				fprintf(stderr, "%s: command not found\n", command);
+			}
+
 			exit(0);
 		}else{
 			int status;
 			waitpid(pid, &status, 0);
 		}
-		
-
-		if (l->in) printf("in: %s\n", l->in);
-		if (l->out) printf("out: %s\n", l->out);
 
 		/* Display each command of the pipe */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			printf("seq[%d]: ", i);
+			//printf("seq[%d]: ", i);
 			for (j=0; cmd[j]!=0; j++) {
-				printf("%s ", cmd[j]);
+				//printf("%s ", cmd[j]);
 			}
 			printf("\n");
 		}

@@ -6,3 +6,4 @@ echo
 ls
 echo
 ps
+quit

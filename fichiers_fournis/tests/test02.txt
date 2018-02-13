@@ -2,3 +2,4 @@
 # test02.txt - Exécuter une commande sans argument
 #
 ls
+quit
