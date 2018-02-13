@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "readcmd.h"
+#include  <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 
 int main()
@@ -12,12 +16,13 @@ int main()
 	while (1) {
 		struct cmdline *l;
 		int i, j;
+		pid_t pid;
 
 		printf("shell> ");
 		l = readcmd();
 
 		/* If input stream closed, normal termination */
-		if (!l) {
+		if (!l || (strcmp(l->seq[0][0],"quit") == 0) ) {
 			printf("exit\n");
 			exit(0);
 		}
@@ -27,6 +32,16 @@ int main()
 			printf("error: %s\n", l->err);
 			continue;
 		}
+
+		pid = fork();
+		if(pid == 0){
+			execvp(l->seq[0][0], l->seq[0]);
+			exit(0);
+		}else{
+			int status;
+			waitpid(pid, &status, 0);
+		}
+		
 
 		if (l->in) printf("in: %s\n", l->in);
 		if (l->out) printf("out: %s\n", l->out);
