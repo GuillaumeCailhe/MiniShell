@@ -39,7 +39,7 @@ int main()
 		/* Display each command of the pipe */
 		for (i=0; l->seq[i]!=0; i++) {		
 			pid = fork();
-			//printf("pid : %d, itération : %d", getpid(), i);
+			printf("pid : %d, itération : %d", getpid(), i);
 			if(pid == 0){
 				if (l->in) {
 					int fdIn = open(l->in, O_RDONLY, 0);
