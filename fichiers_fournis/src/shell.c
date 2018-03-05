@@ -11,11 +11,32 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h> 
+#include <signal.h> 
 
 #define INPUT 1
 #define OUTPUT 0
+
+void handler_child(int sig)
+{
+    pid_t pid=0;
+    while ((pid = waitpid((pid_t)(-1), 0, WNOHANG)) > 0) {}
+    return;
+}
+
+void handler_z(int sig)
+{
+	kill(-1, SIGSTOP);
+}
+
+void handler_c(int sig)
+{	
+	kill(-1, SIGINT);
+}
+
+
 int main()
 {
+	signal(SIGCHLD, handler_child);
 	while (1) {
 		struct cmdline *l;
 		int i;
@@ -60,6 +81,8 @@ int main()
 				fprintf(stderr, "Error : Fork error \n");
 				exit(0);
 			}else if(pid == 0){ // The child executes the command
+				signal(SIGSTOP, handler_z);
+				signal(SIGTERM,handler_c);
 				// Piping the result of the command to the next command
 				if (i!=commandsNumber-1){
 					dup2(pipes[i][INPUT], STDOUT_FILENO);
@@ -103,12 +126,15 @@ int main()
 				}
 
 				exit(0);
-			}else{ // Parent
-				close(pipes[i][INPUT]); // We won't use the input of the current child
-				// Waiting for the child to die
-				int status;
-				waitpid(pid, &status, 0);
+
+			}else{
+				close(pipes[i][INPUT]); // We won't use the input of the current
+				if(l->bg == 0){
+					int status;
+					waitpid(pid, &status, 0);
+				}
 			}
+
 			printf("\n");
 		}
 	}
