@@ -1,0 +1,11 @@
+#
+# test06.txt : Gestion d'erreur du shell
+# Note : En le lançant avec sdriver, les commandes ne sont pas affichés entièrement. Normalement, dans l'exécution normale du shell, on affiche le nom de la commande introuvable.
+#
+
+echo Affichage d'une commande inexistante
+toto
+
+echo Tentative d'accéder à un fichier non autorisé
+cat < /bin/cat/
+

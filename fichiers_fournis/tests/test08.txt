@@ -1,2 +1,7 @@
-firefox &
-ls
+#
+# test08.txt : Commandes en arrière-plan
+#
+
+echo Execution de top en arrière-plan
+top &
+ps

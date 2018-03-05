@@ -1,0 +1,9 @@
+#
+# test07.txt : Gestion des tubes (simples et multiples)
+#
+
+echo Tube simple, comptage du nombre de fichier courant avec ls et wc
+ls -l | wc -l
+
+echo Tube multiple, comptage des fichiers test avec ls, grep et wc
+ls -l tests | grep test | wc -l

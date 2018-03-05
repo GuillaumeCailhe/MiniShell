@@ -1,0 +1,12 @@
+#
+# test05.txt : test les redirections entrée/sortie dans un fichier toto.txt
+#
+
+echo On vide le fichier fichierVide
+echo > fichierVide
+
+echo Ecriture de toto dans le fichier fichierVide avec echo
+echo toto > fichierVide
+
+echo Affichage du fichier fichierVide avec cat
+cat < fichierVide

@@ -1,2 +1,5 @@
-firefox &
-ls
+#
+# test09.txt : Gestion des signaux SIGKILL et SIGSTP
+#
+
+top

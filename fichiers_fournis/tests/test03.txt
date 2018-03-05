@@ -4,4 +4,3 @@
 ls
 echo
 ls
-quit
