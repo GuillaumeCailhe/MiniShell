@@ -12,12 +12,14 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 
-
+#define INPUT 1
+#define OUTPUT 0
 int main()
 {
 	while (1) {
 		struct cmdline *l;
 		int i;
+		int commandsNumber = 1;
 		pid_t pid;
 
 		printf("shell> ");
@@ -34,20 +36,34 @@ int main()
 			printf("error: %s\n", l->err);
 			continue;
 		}
-	
+		
+		// Getting the number of commands
+		while(l->seq[commandsNumber]!=0){
+			commandsNumber++;
+		}
 
-		/* Display each command of the pipe */
-		for (i=0; l->seq[i]!=0; i++) {		
+		// Initialization of the pipes
+		int pipes[commandsNumber][2];
+
+		for(i = 0; i<commandsNumber; i++){ // checking for errors when creating the pipe
+			if(pipe(pipes[i]) < -1){ 
+				fprintf(stderr, "Error: in pipe number %d creation.\n",i);
+				exit(2);
+			}
+		}
+
+		/* Executing each command */
+		for (i=0; i<commandsNumber; i++) {		
 			pid = fork();
-			printf("pid : %d, itération : %d", getpid(), i);
-			if(pid == 0){
-				if (l->in) {
-					int fdIn = open(l->in, O_RDONLY, 0);
-					dup2(fdIn, STDIN_FILENO);
-					close(fdIn);
-				}
-				
-				if (l->out){
+
+			if(pid == -1){ // Erreur
+				fprintf(stderr, "Error : Fork error \n");
+				exit(0);
+			}else if(pid == 0){ // The child executes the command
+				// Piping the result of the command to the next command
+				if (i!=commandsNumber-1){
+					dup2(pipes[i][INPUT], STDOUT_FILENO);
+				}else if (l->out){ // Redirecting outputs >
 					int fdOut = open(l->out, O_WRONLY, 0);
 					
 					if(fdOut == -1){
@@ -56,9 +72,29 @@ int main()
 						dup2(fdOut, STDOUT_FILENO);
 					}
 
-					close(fdOut);
+					//close(fdOut);
 				}
 
+				// Reading the pipe to get the result of the previous command
+				if(i){
+					dup2(pipes[i-1][OUTPUT], STDIN_FILENO);
+				}else if (l->in) { // Redirecting  inputs <
+					int fdIn = open(l->in, O_RDONLY, 0);
+					if(fdIn == -1){
+						fprintf(stderr, "%s: Permission denied\n", l->in);
+					}
+					dup2(fdIn, STDIN_FILENO);
+					//close(fdIn);
+				}
+
+				// Closing the pipes in the current process to avoid errors
+				int j = 0;
+				for(j=0; j<commandsNumber; j++){
+					close(pipes[j][OUTPUT]);
+					close(pipes[j][INPUT]);
+				}
+
+				// Executing the current command
 				int execError;
 				char* command = l->seq[i][0];
 				execError = execvp(command, l->seq[i]);
@@ -67,11 +103,12 @@ int main()
 				}
 
 				exit(0);
-			}else{
+			}else{ // Parent
+				close(pipes[i][INPUT]); // We won't use the input of the current child
+				// Waiting for the child to die
 				int status;
 				waitpid(pid, &status, 0);
 			}
-
 			printf("\n");
 		}
 	}
